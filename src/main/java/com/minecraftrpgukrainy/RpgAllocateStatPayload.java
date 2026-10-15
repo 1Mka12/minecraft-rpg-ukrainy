@@ -38,6 +38,9 @@ public record RpgAllocateStatPayload(
         return TYPE;
     }
 
+    /**
+     * Обробляє розподіл очок тільки на сервері.
+     */
     public static void handle(
             RpgAllocateStatPayload payload,
             IPayloadContext context
@@ -49,7 +52,7 @@ public record RpgAllocateStatPayload(
 
             RpgStats.Stat[] stats = RpgStats.Stat.values();
 
-            // Забороняємо від'ємні ID та ID поза межами масиву.
+            // Перевіряємо ID характеристики.
             if (payload.statId() < 0
                     || payload.statId() >= stats.length) {
                 return;
@@ -61,14 +64,10 @@ public record RpgAllocateStatPayload(
                 return;
             }
 
-            // Усі зміни виконуються тільки на сервері.
+            // Зміна відбувається тільки після серверної перевірки.
             if (payload.remove()) {
-                // removePoint сам перевіряє наявність очка
-                // у вибраній характеристиці.
                 RpgPlayerData.removePoint(player, stat);
             } else {
-                // allocatePoint перевіряє вільні очки
-                // та допустимість збільшення характеристики.
                 RpgPlayerData.allocatePoint(player, stat);
             }
         });
