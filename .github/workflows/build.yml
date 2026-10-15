@@ -26,3 +26,10 @@ jobs:
 
       - name: Build with Gradle
         run: gradle build
+
+      - name: Upload mod JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: minecraft-rpg-ukrainy
+          path: build/libs/*.jar
+          if-no-files-found: error
