@@ -119,6 +119,9 @@ public class RpgStatusScreen extends Screen {
                 : this.minecraft.player;
 
         if (player != null) {
+            int level = RpgClientStatsCache.getLevel();
+            int experience = RpgClientStatsCache.getExperience();
+
             graphics.drawString(
                     font,
                     "Герой: " + player.getName().getString(),
@@ -128,17 +131,15 @@ public class RpgStatusScreen extends Screen {
 
             graphics.drawString(
                     font,
-                    "Рівень: " + RpgClientStatsCache.getLevel(),
+                    "Рівень: " + level,
                     left + 14, top + 50,
                     0xFFFFD875
             );
 
             graphics.drawString(
                     font,
-                    "Досвід: "
-                            + RpgClientStatsCache.getExperience()
-                            + " / "
-                            + RpgPlayerLevel.getExperienceForNextLevel(player),
+                    "Досвід: " + experience + " / "
+                            + getRequiredExperienceForDisplay(level),
                     left + 14, top + 64,
                     0xFF80E8A1
             );
@@ -173,6 +174,18 @@ public class RpgStatusScreen extends Screen {
         );
 
         super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private int getRequiredExperienceForDisplay(int level) {
+        if (level <= 1) {
+            return 8;
+        }
+
+        if (level >= 32) {
+            return Integer.MAX_VALUE;
+        }
+
+        return 8 << (level - 1);
     }
 
     private int getCachedStat(RpgStats.Stat stat) {
