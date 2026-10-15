@@ -27,11 +27,18 @@ public final class RpgNetwork {
                 RpgSkillPayload::handle
         );
 
-        // Розподіл очок характеристик: клієнт -> сервер.
+        // Розподіл очок: клієнт -> сервер.
         registrar.playToServer(
                 RpgAllocateStatPayload.TYPE,
                 RpgAllocateStatPayload.STREAM_CODEC,
                 RpgAllocateStatPayload::handle
+        );
+
+        // Синхронізація характеристик: сервер -> клієнт.
+        registrar.playToClient(
+                RpgStatsSyncPayload.TYPE,
+                RpgStatsSyncPayload.STREAM_CODEC,
+                RpgStatsSyncPayload::handle
         );
     }
 }
