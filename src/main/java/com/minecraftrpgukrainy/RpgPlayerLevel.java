@@ -1,3 +1,4 @@
+
 package com.minecraftrpgukrainy;
 
 import net.minecraft.nbt.CompoundTag;
@@ -39,49 +40,70 @@ public final class RpgPlayerLevel {
     }
 
     /**
-     * Досвід, необхідний для наступного рівня.
-     * Рівень 1 -> 2: 8 XP.
-     * Рівень 2 -> 3: 16 XP.
-     * Рівень 3 -> 4: 32 XP.
-     * Кожен наступний поріг подвоюється.
+     * Досвід для наступного рівня:
+     * рівень 1 -> 2: 8 XP
+     * рівень 2 -> 3: 16 XP
+     * рівень 3 -> 4: 32 XP
+     *
+     * Поріг подвоюється на кожному наступному рівні.
      */
     public static int getExperienceForNextLevel(Player player) {
-        int level = getLevel(player);
+        return getRequiredExperience(getLevel(player));
+    }
 
-        int shift = level - 1;
+    /**
+     * Безпечне обчислення порога досвіду.
+     */
+    public static int getRequiredExperience(int level) {
+        int safeLevel = Math.max(START_LEVEL, level);
+        int shift = safeLevel - 1;
 
-        if (shift >= 31) {
+        // 8 << 28 — останній поріг,
+        // який можна подати додатним int.
+        if (shift >= 28) {
             return Integer.MAX_VALUE;
         }
 
         return 8 << shift;
     }
 
+    /**
+     * Додає досвід лише на сервері.
+     * Підтримує отримання кількох рівнів за раз.
+     */
     public static void addExperience(Player player, int amount) {
-        if (player.level().isClientSide() || amount <= 0) {
+        if (player == null
+                || player.level().isClientSide()
+                || amount <= 0) {
             return;
         }
 
         CompoundTag data = getData(player);
 
-        long total = (long) getExperience(player) + amount;
+        long totalExperience =
+                (long) getExperience(player) + amount;
+
         int level = getLevel(player);
 
         while (level < Integer.MAX_VALUE) {
-            int shift = level - 1;
+            int required = getRequiredExperience(level);
 
-            // Захист від переповнення цілого числа.
-            if (shift >= 31) {
+            // Не дозволяємо переповненню
+            // або граничному значенню зламати цикл.
+            if (required == Integer.MAX_VALUE) {
                 break;
             }
 
-            long required = 8L << shift;
-
-            if (total < required) {
+            if (totalExperience < required) {
                 break;
             }
 
-            total -= required;
+            totalExperience -= required;
+
+            if (level == Integer.MAX_VALUE) {
+                break;
+            }
+
             level++;
 
             // 5 вільних очок за кожен новий рівень.
@@ -91,10 +113,16 @@ public final class RpgPlayerLevel {
         data.putInt(LEVEL_KEY, level);
         data.putInt(
                 EXPERIENCE_KEY,
-                (int) Math.min(total, Integer.MAX_VALUE)
+                (int) Math.min(
+                        Math.max(0L, totalExperience),
+                        Integer.MAX_VALUE
+                )
         );
     }
 
+    /**
+     * Прогрес до наступного рівня у діапазоні 0.0–1.0.
+     */
     public static double getExperienceProgress(Player player) {
         int required = getExperienceForNextLevel(player);
 
@@ -108,3 +136,4 @@ public final class RpgPlayerLevel {
         );
     }
 }
+
