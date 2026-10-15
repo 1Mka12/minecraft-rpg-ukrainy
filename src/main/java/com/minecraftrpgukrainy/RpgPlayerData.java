@@ -22,7 +22,7 @@ public final class RpgPlayerData {
     private static final String STARTER_POINTS_GIVEN =
             PREFIX + "starter_points_given";
 
-    private static RpgPlayerData() {
+    private RpgPlayerData() {
     }
 
     private static CompoundTag getData(Player player) {
