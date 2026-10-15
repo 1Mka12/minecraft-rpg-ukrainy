@@ -1,4 +1,3 @@
-
 package com.minecraftrpgukrainy;
 
 import net.neoforged.bus.api.SubscribeEvent;
@@ -20,21 +19,21 @@ public final class RpgNetwork {
     ) {
         var registrar = event.registrar("1");
 
-        // Навички: клієнт -> сервер.
+        // Клієнт → сервер: використання навичок.
         registrar.playToServer(
                 RpgSkillPayload.TYPE,
                 RpgSkillPayload.STREAM_CODEC,
                 RpgSkillPayload::handle
         );
 
-        // Розподіл очок: клієнт -> сервер.
+        // Клієнт → сервер: розподіл очок характеристик.
         registrar.playToServer(
                 RpgAllocateStatPayload.TYPE,
                 RpgAllocateStatPayload.STREAM_CODEC,
                 RpgAllocateStatPayload::handle
         );
 
-        // Синхронізація характеристик: сервер -> клієнт.
+        // Сервер → клієнт: синхронізація характеристик.
         registrar.playToClient(
                 RpgStatsSyncPayload.TYPE,
                 RpgStatsSyncPayload.STREAM_CODEC,
