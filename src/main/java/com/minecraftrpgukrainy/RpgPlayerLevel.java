@@ -1,4 +1,3 @@
-
 package com.minecraftrpgukrainy;
 
 import net.minecraft.nbt.CompoundTag;
@@ -39,12 +38,23 @@ public final class RpgPlayerLevel {
         );
     }
 
+    /**
+     * Досвід, необхідний для наступного рівня.
+     * Рівень 1 -> 2: 8 XP.
+     * Рівень 2 -> 3: 16 XP.
+     * Рівень 3 -> 4: 32 XP.
+     * Кожен наступний поріг подвоюється.
+     */
     public static int getExperienceForNextLevel(Player player) {
         int level = getLevel(player);
 
-        long required = 100L + (long) (level - 1) * 50L;
+        int shift = level - 1;
 
-        return (int) Math.min(required, Integer.MAX_VALUE);
+        if (shift >= 31) {
+            return Integer.MAX_VALUE;
+        }
+
+        return 8 << shift;
     }
 
     public static void addExperience(Player player, int amount) {
@@ -58,8 +68,14 @@ public final class RpgPlayerLevel {
         int level = getLevel(player);
 
         while (level < Integer.MAX_VALUE) {
-            long required =
-                    100L + (long) (level - 1) * 50L;
+            int shift = level - 1;
+
+            // Захист від переповнення цілого числа.
+            if (shift >= 31) {
+                break;
+            }
+
+            long required = 8L << shift;
 
             if (total < required) {
                 break;
@@ -68,6 +84,7 @@ public final class RpgPlayerLevel {
             total -= required;
             level++;
 
+            // 5 вільних очок за кожен новий рівень.
             RpgPlayerData.addFreePoints(player, 5);
         }
 
@@ -81,8 +98,8 @@ public final class RpgPlayerLevel {
     public static double getExperienceProgress(Player player) {
         int required = getExperienceForNextLevel(player);
 
-        if (required <= 0) {
-            return 1.0;
+        if (required <= 0 || required == Integer.MAX_VALUE) {
+            return 0.0;
         }
 
         return Math.min(
