@@ -138,8 +138,7 @@ public class RpgStatusScreen extends Screen {
                     "Досвід: "
                             + RpgClientStatsCache.getExperience()
                             + " / "
-                            + RpgPlayerLevel.getExperienceForNextLevel(
-                                    RpgClientStatsCache.getLevel()),
+                            + RpgPlayerLevel.getExperienceForNextLevel(player),
                     left + 14, top + 64,
                     0xFF80E8A1
             );
