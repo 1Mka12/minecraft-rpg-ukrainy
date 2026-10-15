@@ -1,7 +1,6 @@
 package com.minecraftrpgukrainy;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -27,33 +26,39 @@ public record RpgStatsSyncPayload(
     public static final StreamCodec<
             RegistryFriendlyByteBuf,
             RpgStatsSyncPayload
-            > STREAM_CODEC = StreamCodec.composite(
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::strength,
+            > STREAM_CODEC = new StreamCodec<>() {
 
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::agility,
-
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::endurance,
-
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::perception,
-
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::intelligence,
-
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::freePoints,
-
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::level,
-
-                    ByteBufCodecs.VAR_INT,
-                    RpgStatsSyncPayload::experience,
-
-                    RpgStatsSyncPayload::new
+        @Override
+        public RpgStatsSyncPayload decode(
+                RegistryFriendlyByteBuf buffer
+        ) {
+            return new RpgStatsSyncPayload(
+                    buffer.readVarInt(),
+                    buffer.readVarInt(),
+                    buffer.readVarInt(),
+                    buffer.readVarInt(),
+                    buffer.readVarInt(),
+                    buffer.readVarInt(),
+                    buffer.readVarInt(),
+                    buffer.readVarInt()
             );
+        }
+
+        @Override
+        public void encode(
+                RegistryFriendlyByteBuf buffer,
+                RpgStatsSyncPayload payload
+        ) {
+            buffer.writeVarInt(payload.strength());
+            buffer.writeVarInt(payload.agility());
+            buffer.writeVarInt(payload.endurance());
+            buffer.writeVarInt(payload.perception());
+            buffer.writeVarInt(payload.intelligence());
+            buffer.writeVarInt(payload.freePoints());
+            buffer.writeVarInt(payload.level());
+            buffer.writeVarInt(payload.experience());
+        }
+    };
 
     @Override
     public Type<? extends CustomPacketPayload> type() {
