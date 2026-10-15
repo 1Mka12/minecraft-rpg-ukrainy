@@ -35,10 +35,6 @@ public class RpgStatusScreen extends Screen {
         int plusX = left + panelWidth - 43;
         int minusX = left + panelWidth - 72;
 
-        // ВАЖЛИВО:
-        // Тут немає надсилання пакетів.
-        // Відкриття меню не витрачає очки.
-
         for (int i = 0; i < STATS.length; i++) {
             final RpgStats.Stat stat = STATS[i];
             int y = top + 93 + i * ROW_HEIGHT;
@@ -191,16 +187,11 @@ public class RpgStatusScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
+    /**
+     * Використовує спільну формулу з RpgPlayerLevel.
+     */
     private int getRequiredExperienceForDisplay(int level) {
-        if (level <= 1) {
-            return 8;
-        }
-
-        if (level >= 32) {
-            return Integer.MAX_VALUE;
-        }
-
-        return 8 << (level - 1);
+        return RpgPlayerLevel.getRequiredExperience(level);
     }
 
     private int getCachedStat(RpgStats.Stat stat) {
