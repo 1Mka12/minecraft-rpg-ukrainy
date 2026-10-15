@@ -1,20 +1,22 @@
 package com.minecraftrpgukrainy;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffects;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-@EventBusSubscriber(modid = MinecraftRpgUkrainy.MOD_ID)
+@EventBusSubscriber(
+        modid = MinecraftRpgUkrainy.MOD_ID,
+        bus = EventBusSubscriber.Bus.GAME
+)
 public final class RpgCombatEvents {
 
     private RpgCombatEvents() {
     }
 
     /**
-     * Серверний тик гравця.
-     * Оновлює тривалість і перезаряджання ультимативної навички гобліна.
+     * Оновлення ультимативної навички на сервері.
+     * Викликається один раз на кожному серверному тику гравця.
      */
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
@@ -26,23 +28,32 @@ public final class RpgCombatEvents {
     }
 
     /**
-     * Перевірка, чи може гравець активувати ультимативну навичку гобліна.
+     * Активація ультимативної навички гобліна.
      */
     public static boolean activateGoblinUltimate(ServerPlayer player) {
         return RpgGoblinUltimate.activate(player);
     }
 
     /**
-     * Перевірка активності навички.
+     * Перевірка активності ультимативної навички.
      */
     public static boolean isGoblinUltimateActive(ServerPlayer player) {
         return RpgGoblinUltimate.isActive(player);
     }
 
     /**
+     * Залишок часу дії навички в тіках.
+     */
+    public static int getGoblinUltimateRemainingTicks(
+            ServerPlayer player) {
+        return RpgGoblinUltimate.getRemainingTicks(player);
+    }
+
+    /**
      * Залишок перезаряджання в тіках.
      */
-    public static int getGoblinUltimateCooldown(ServerPlayer player) {
+    public static int getGoblinUltimateCooldownTicks(
+            ServerPlayer player) {
         return RpgGoblinUltimate.getCooldownTicks(player);
     }
 
@@ -51,7 +62,6 @@ public final class RpgCombatEvents {
      */
     public static int getGoblinUltimateCooldownSeconds(
             ServerPlayer player) {
-        int ticks = getGoblinUltimateCooldown(player);
-        return (ticks + 19) / 20;
+        return RpgGoblinUltimate.getCooldownSeconds(player);
     }
 }
