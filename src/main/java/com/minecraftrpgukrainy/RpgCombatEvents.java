@@ -1,122 +1,57 @@
 package com.minecraftrpgukrainy;
 
-import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-@EventBusSubscriber(
-        modid = MinecraftRpgUkrainy.MOD_ID,
-        bus = EventBusSubscriber.Bus.GAME
-)
-public final class RpgGoblinUltimate {
+@EventBusSubscriber(modid = MinecraftRpgUkrainy.MOD_ID)
+public final class RpgCombatEvents {
 
-    private static final String COOLDOWN_KEY =
-            "minecraft_rpg_ukrainy_goblin_ultimate_cooldown";
-
-    private static final int DURATION_TICKS = 60 * 20;
-    private static final int COOLDOWN_TICKS = 5 * 60 * 20;
-
-    private RpgGoblinUltimate() {
+    private RpgCombatEvents() {
     }
 
+    /**
+     * Серверний тик гравця.
+     * Оновлює тривалість і перезаряджання ультимативної навички гобліна.
+     */
     @SubscribeEvent
-    public static void onRegisterCommands(
-            RegisterCommandsEvent event) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
 
-        event.getDispatcher().register(
-                Commands.literal("rpgultimate")
-                        .executes(context ->
-                                activate(
-                                        context.getSource()
-                                                .getPlayerOrException()
-                                )
-                        )
-        );
+        RpgGoblinUltimate.tick(player);
     }
 
-    private static int activate(ServerPlayer player) {
+    /**
+     * Перевірка, чи може гравець активувати ультимативну навичку гобліна.
+     */
+    public static boolean activateGoblinUltimate(ServerPlayer player) {
+        return RpgGoblinUltimate.activate(player);
+    }
 
-        // Потрібно 30 очок Сприйняття.
-        if (!RpgPlayerData.isSkillUnlocked(
-                player,
-                RpgStats.Skill.GOBLIN_ULTIMATE)) {
+    /**
+     * Перевірка активності навички.
+     */
+    public static boolean isGoblinUltimateActive(ServerPlayer player) {
+        return RpgGoblinUltimate.isActive(player);
+    }
 
-            player.sendSystemMessage(
-                    Component.literal(
-                            "§cУльтимативна навичка Гобліна "
-                                    + "потребує 30 очок Сприйняття!"
-                    )
-            );
+    /**
+     * Залишок перезаряджання в тіках.
+     */
+    public static int getGoblinUltimateCooldown(ServerPlayer player) {
+        return RpgGoblinUltimate.getCooldownTicks(player);
+    }
 
-            return 0;
-        }
-
-        long now = player.level().getGameTime();
-
-        long cooldownEnd = player.getPersistentData()
-                .getLong(COOLDOWN_KEY);
-
-        if (now < cooldownEnd) {
-            long secondsLeft = (cooldownEnd - now + 19) / 20;
-
-            player.sendSystemMessage(
-                    Component.literal(
-                            "§eНавичка ще перезаряджається: "
-                                    + secondsLeft + " с."
-                    )
-            );
-
-            return 0;
-        }
-
-        // Тривалість усіх ефектів — 60 секунд.
-        player.addEffect(new MobEffectInstance(
-                MobEffects.STRENGTH,
-                DURATION_TICKS,
-                1
-        ));
-
-        player.addEffect(new MobEffectInstance(
-                MobEffects.SPEED,
-                DURATION_TICKS,
-                1
-        ));
-
-        player.addEffect(new MobEffectInstance(
-                MobEffects.RESISTANCE,
-                DURATION_TICKS,
-                0
-        ));
-
-        player.addEffect(new MobEffectInstance(
-                MobEffects.HASTE,
-                DURATION_TICKS,
-                1
-        ));
-
-        player.getPersistentData().putLong(
-                COOLDOWN_KEY,
-                now + COOLDOWN_TICKS
-        );
-
-        player.sendSystemMessage(
-                Component.literal(
-                        "§6§lУЛЬТИМАТИВНА НАВИЧКА ГОБЛІНА!"
-                )
-        );
-
-        player.sendSystemMessage(
-                Component.literal(
-                        "§aНа 60 секунд посилено атаку, "
-                                + "швидкість, захист і швидкість копання."
-                )
-        );
-
-        return 1;
+    /**
+     * Залишок перезаряджання в секундах.
+     */
+    public static int getGoblinUltimateCooldownSeconds(
+            ServerPlayer player) {
+        int ticks = getGoblinUltimateCooldown(player);
+        return (ticks + 19) / 20;
     }
 }
