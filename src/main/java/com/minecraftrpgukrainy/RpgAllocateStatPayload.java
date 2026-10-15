@@ -5,27 +5,54 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record RpgAllocateStatPayload(
-        int statId,
-        boolean remove
+public record RpgStatsSyncPayload(
+        int strength,
+        int agility,
+        int endurance,
+        int perception,
+        int intelligence,
+        int freePoints,
+        int level,
+        int experience
 ) implements CustomPacketPayload {
 
-    public static final Type<RpgAllocateStatPayload> TYPE =
+    public static final Type<RpgStatsSyncPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(
                     MinecraftRpgUkrainy.MOD_ID,
-                    "allocate_stat"
+                    "stats_sync"
             ));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, RpgAllocateStatPayload> STREAM_CODEC =
-            StreamCodec.composite(
+    public static final StreamCodec<
+            RegistryFriendlyByteBuf,
+            RpgStatsSyncPayload
+            > STREAM_CODEC = StreamCodec.composite(
                     ByteBufCodecs.VAR_INT,
-                    RpgAllocateStatPayload::statId,
-                    ByteBufCodecs.BOOL,
-                    RpgAllocateStatPayload::remove,
-                    RpgAllocateStatPayload::new
+                    RpgStatsSyncPayload::strength,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::agility,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::endurance,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::perception,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::intelligence,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::freePoints,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::level,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::experience,
+
+                    RpgStatsSyncPayload::new
             );
 
     @Override
@@ -34,30 +61,11 @@ public record RpgAllocateStatPayload(
     }
 
     public static void handle(
-            RpgAllocateStatPayload payload,
+            RpgStatsSyncPayload payload,
             IPayloadContext context
     ) {
-        context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)) {
-                return;
-            }
-
-            RpgStats.Stat[] stats = RpgStats.Stat.values();
-
-            if (payload.statId() < 0
-                    || payload.statId() >= stats.length) {
-                return;
-            }
-
-            RpgStats.Stat stat = stats[payload.statId()];
-
-            if (payload.remove()) {
-                RpgPlayerData.removePoint(player, stat);
-            } else {
-                RpgPlayerData.allocatePoint(player, stat);
-            }
-
-            RpgStatsSync.send(player);
-        });
+        context.enqueueWork(() ->
+                RpgClientStatsCache.apply(payload)
+        );
     }
 }
