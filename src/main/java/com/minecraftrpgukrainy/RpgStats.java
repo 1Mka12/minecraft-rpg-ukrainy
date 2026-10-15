@@ -37,7 +37,11 @@ public class RpgStats {
         SECOND_WIND(Stat.ENDURANCE, "Друге дихання"),
         HUNTER_MARK(Stat.PERCEPTION, "Мітка мисливця"),
         DOUBLE_STRIKE(Stat.AGILITY, "Подвійний удар"),
-        MANA_SHIELD(Stat.INTELLIGENCE, "Щит мани");
+        MANA_SHIELD(Stat.INTELLIGENCE, "Щит мани"),
+        GOBLIN_ULTIMATE(
+                Stat.PERCEPTION,
+                "Ультимативна навичка Гобліна"
+        );
 
         private final Stat requiredStat;
         private final String displayName;
@@ -117,6 +121,10 @@ public class RpgStats {
     }
 
     public int getPoints(Stat stat) {
+        if (stat == null) {
+            return 0;
+        }
+
         return points.get(stat);
     }
 
@@ -133,7 +141,7 @@ public class RpgStats {
     public double getAllocationShare(Stat stat) {
         int total = getTotalAllocatedPoints();
 
-        if (total == 0) {
+        if (stat == null || total == 0) {
             return 0.0;
         }
 
@@ -148,7 +156,7 @@ public class RpgStats {
         int allocated = getPoints(stat);
         int total = getTotalAllocatedPoints();
 
-        if (total == 0) {
+        if (stat == null || total == 0) {
             return 0.0;
         }
 
@@ -169,7 +177,21 @@ public class RpgStats {
                 >= SKILL_UNLOCK_POINTS;
     }
 
+    /**
+     * Ультимативна навичка Гобліна:
+     * потрібні 30 очок Сприйняття.
+     * Ранг S не потрібен.
+     */
+    public boolean isGoblinUltimateUnlocked() {
+        return getPoints(Stat.PERCEPTION)
+                >= SKILL_UNLOCK_POINTS;
+    }
+
     public Stat getMainAttackStat(Archetype archetype) {
+        if (archetype == null) {
+            return Stat.STRENGTH;
+        }
+
         return switch (archetype) {
             case SWORDSMAN, SLIME, SHIELD, DRAGON ->
                     Stat.STRENGTH;
@@ -199,6 +221,10 @@ public class RpgStats {
 
     public double getEvasionPoints(Archetype archetype) {
         double agility = getEffectivePoints(Stat.AGILITY);
+
+        if (archetype == null) {
+            return agility;
+        }
 
         return switch (archetype) {
             case SPIDER_WOMAN, ASSASSIN, MONARCH, RETURNER ->
@@ -249,4 +275,4 @@ public class RpgStats {
 
         return Math.min(0.50, result);
     }
-  }
+}
