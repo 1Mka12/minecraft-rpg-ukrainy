@@ -1,4 +1,3 @@
-
 package com.minecraftrpgukrainy;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -17,6 +16,9 @@ public final class RpgStatsSync {
     private RpgStatsSync() {
     }
 
+    /**
+     * Відправляє поточні характеристики конкретному гравцеві.
+     */
     public static void send(ServerPlayer player) {
         if (player == null || player.level().isClientSide()) {
             return;
@@ -24,15 +26,20 @@ public final class RpgStatsSync {
 
         RpgStatsSyncPayload payload = new RpgStatsSyncPayload(
                 RpgPlayerData.getPoints(
-                        player, RpgStats.Stat.STRENGTH),
+                        player, RpgStats.Stat.STRENGTH
+                ),
                 RpgPlayerData.getPoints(
-                        player, RpgStats.Stat.AGILITY),
+                        player, RpgStats.Stat.AGILITY
+                ),
                 RpgPlayerData.getPoints(
-                        player, RpgStats.Stat.ENDURANCE),
+                        player, RpgStats.Stat.ENDURANCE
+                ),
                 RpgPlayerData.getPoints(
-                        player, RpgStats.Stat.PERCEPTION),
+                        player, RpgStats.Stat.PERCEPTION
+                ),
                 RpgPlayerData.getPoints(
-                        player, RpgStats.Stat.INTELLIGENCE),
+                        player, RpgStats.Stat.INTELLIGENCE
+                ),
                 RpgPlayerData.getFreePoints(player),
                 RpgPlayerLevel.getLevel(player),
                 RpgPlayerLevel.getExperience(player)
@@ -41,8 +48,11 @@ public final class RpgStatsSync {
         PacketDistributor.sendToPlayer(player, payload);
     }
 
+    /**
+     * Оновлює дані після входу гравця.
+     */
     @SubscribeEvent
-    public static void onLogin(
+    public static void onPlayerLogin(
             PlayerEvent.PlayerLoggedInEvent event
     ) {
         if (event.getEntity() instanceof ServerPlayer player) {
@@ -50,6 +60,9 @@ public final class RpgStatsSync {
         }
     }
 
+    /**
+     * Періодично синхронізує дані під час гри.
+     */
     @SubscribeEvent
     public static void onPlayerTick(
             PlayerTickEvent.Post event
@@ -58,7 +71,6 @@ public final class RpgStatsSync {
             return;
         }
 
-        // Оновлюємо кеш двічі на секунду.
         if (player.tickCount % 10 == 0) {
             send(player);
         }
