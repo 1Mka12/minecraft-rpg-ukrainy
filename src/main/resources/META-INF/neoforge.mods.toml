@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="minecraft_rpg_ukrainy"
+version="1.0.0"
+displayName="Майнкрафт РПГ України"
+description='''
+Українська рольова RPG для Minecraft.
+'''
