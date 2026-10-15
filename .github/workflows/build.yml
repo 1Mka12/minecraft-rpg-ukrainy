@@ -1,26 +1,28 @@
-name: Build Minecraft RPG Ukrainy
-on: push: workflow_dispatch:
-permissions: contents: read
-jobs: build: runs-on: ubuntu-latest
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+name: Build Minecraft RPG Ukraine
 
-  - name: Set up Java 21
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '21'
+on:
+  push:
+  workflow_dispatch:
 
-  - name: Set up Gradle
-    uses: gradle/actions/setup-gradle@v4
+permissions:
+  contents: read
 
-  - name: Build mod
-    run: gradle build --no-daemon
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  - name: Upload mod
-    uses: actions/upload-artifact@v4
-    if: success()
-    with:
-      name: minecraft-rpg-ukrainy
-      path: build/libs/*.jar
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build with Gradle
+        run: gradle build
