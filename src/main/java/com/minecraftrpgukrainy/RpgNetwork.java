@@ -1,3 +1,4 @@
+
 package com.minecraftrpgukrainy;
 
 import net.neoforged.bus.api.SubscribeEvent;
@@ -15,12 +16,22 @@ public final class RpgNetwork {
 
     @SubscribeEvent
     public static void registerPayloads(
-            RegisterPayloadHandlersEvent event) {
+            RegisterPayloadHandlersEvent event
+    ) {
+        var registrar = event.registrar("1");
 
-        event.registrar("1").playToServer(
+        // Навички: клієнт -> сервер.
+        registrar.playToServer(
                 RpgSkillPayload.TYPE,
                 RpgSkillPayload.STREAM_CODEC,
                 RpgSkillPayload::handle
+        );
+
+        // Розподіл очок: клієнт -> сервер.
+        registrar.playToServer(
+                RpgAllocateStatPayload.TYPE,
+                RpgAllocateStatPayload.STREAM_CODEC,
+                RpgAllocateStatPayload::handle
         );
     }
 }
