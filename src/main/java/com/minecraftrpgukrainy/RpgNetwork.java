@@ -37,35 +37,49 @@ public final class RpgNetwork {
             RpgAllocateStatPayload payload,
             IPayloadContext context) {
 
-        if (!(context.player() instanceof ServerPlayer player)) {
-            return;
-        }
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player)) {
+                return;
+            }
 
-        int statId = payload.statId();
-        RpgStats.Stat[] stats = RpgStats.Stat.values();
+            int statId = payload.statId();
 
-        if (statId < 0 || statId >= stats.length) {
-            return;
-        }
+            // Спеціальний запит початкових даних.
+            if (statId == -1) {
+                sendStats(player);
+                return;
+            }
 
-        RpgStats.Stat stat = stats[statId];
+            RpgStats.Stat[] stats = RpgStats.Stat.values();
 
-        if (payload.remove()) {
-            RpgPlayerData.removePoint(player, stat);
-        } else {
-            RpgPlayerData.allocatePoint(player, stat);
-        }
+            if (statId < 0 || statId >= stats.length) {
+                return;
+            }
 
-        sendStats(player);
+            RpgStats.Stat stat = stats[statId];
+
+            if (payload.remove()) {
+                RpgPlayerData.removePoint(player, stat);
+            } else {
+                RpgPlayerData.allocatePoint(player, stat);
+            }
+
+            sendStats(player);
+        });
     }
 
     public static void sendStats(ServerPlayer player) {
         RpgStatsSyncPayload payload = new RpgStatsSyncPayload(
-                RpgPlayerData.getPoints(player, RpgStats.Stat.STRENGTH),
-                RpgPlayerData.getPoints(player, RpgStats.Stat.AGILITY),
-                RpgPlayerData.getPoints(player, RpgStats.Stat.ENDURANCE),
-                RpgPlayerData.getPoints(player, RpgStats.Stat.PERCEPTION),
-                RpgPlayerData.getPoints(player, RpgStats.Stat.INTELLIGENCE),
+                RpgPlayerData.getPoints(
+                        player, RpgStats.Stat.STRENGTH),
+                RpgPlayerData.getPoints(
+                        player, RpgStats.Stat.AGILITY),
+                RpgPlayerData.getPoints(
+                        player, RpgStats.Stat.ENDURANCE),
+                RpgPlayerData.getPoints(
+                        player, RpgStats.Stat.PERCEPTION),
+                RpgPlayerData.getPoints(
+                        player, RpgStats.Stat.INTELLIGENCE),
                 RpgPlayerData.getFreePoints(player),
                 RpgPlayerLevel.getLevel(player),
                 RpgPlayerLevel.getExperience(player)
@@ -77,6 +91,9 @@ public final class RpgNetwork {
     private static void handleStatsSync(
             RpgStatsSyncPayload payload,
             IPayloadContext context) {
-        // Дані обробимо на клієнті наступним кроком.
+
+        context.enqueueWork(() ->
+                RpgClientStatsCache.apply(payload)
+        );
     }
 }
