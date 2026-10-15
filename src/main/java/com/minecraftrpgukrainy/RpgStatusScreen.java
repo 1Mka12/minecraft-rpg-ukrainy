@@ -1,4 +1,3 @@
-
 package com.minecraftrpgukrainy;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -6,6 +5,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class RpgStatusScreen extends Screen {
 
@@ -55,27 +55,23 @@ public class RpgStatusScreen extends Screen {
     }
 
     private void allocate(RpgStats.Stat stat) {
-        Player player = this.minecraft.player;
-
-        if (player == null) {
+        if (this.minecraft == null || this.minecraft.player == null) {
             return;
         }
 
-        // Тимчасове локальне оновлення.
-        // Серверну синхронізацію підключимо окремим кроком.
-        RpgPlayerData.allocatePoint(player, stat);
+        PacketDistributor.sendToServer(
+                new RpgAllocateStatPayload(stat.ordinal(), false)
+        );
     }
 
     private void remove(RpgStats.Stat stat) {
-        Player player = this.minecraft.player;
-
-        if (player == null) {
+        if (this.minecraft == null || this.minecraft.player == null) {
             return;
         }
 
-        // Тимчасове локальне оновлення.
-        // Серверну синхронізацію підключимо окремим кроком.
-        RpgPlayerData.removePoint(player, stat);
+        PacketDistributor.sendToServer(
+                new RpgAllocateStatPayload(stat.ordinal(), true)
+        );
     }
 
     @Override
