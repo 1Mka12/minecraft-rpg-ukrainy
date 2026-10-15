@@ -32,15 +32,24 @@ public record RpgStatsSyncPayload(
         public RpgStatsSyncPayload decode(
                 RegistryFriendlyByteBuf buffer
         ) {
+            int strength = buffer.readVarInt();
+            int agility = buffer.readVarInt();
+            int endurance = buffer.readVarInt();
+            int perception = buffer.readVarInt();
+            int intelligence = buffer.readVarInt();
+            int freePoints = buffer.readVarInt();
+            int level = buffer.readVarInt();
+            int experience = buffer.readVarInt();
+
             return new RpgStatsSyncPayload(
-                    buffer.readVarInt(),
-                    buffer.readVarInt(),
-                    buffer.readVarInt(),
-                    buffer.readVarInt(),
-                    buffer.readVarInt(),
-                    buffer.readVarInt(),
-                    buffer.readVarInt(),
-                    buffer.readVarInt()
+                    strength,
+                    agility,
+                    endurance,
+                    perception,
+                    intelligence,
+                    freePoints,
+                    level,
+                    experience
             );
         }
 
