@@ -34,6 +34,13 @@ public class RpgStatusScreen extends Screen {
         int plusX = left + panelWidth - 43;
         int minusX = left + panelWidth - 72;
 
+        // Запитуємо актуальні дані сервера.
+        if (this.minecraft != null && this.minecraft.player != null) {
+            PacketDistributor.sendToServer(
+                    new RpgAllocateStatPayload(-1, false)
+            );
+        }
+
         for (int i = 0; i < STATS.length; i++) {
             final RpgStats.Stat stat = STATS[i];
             int y = top + 93 + i * ROW_HEIGHT;
@@ -107,7 +114,9 @@ public class RpgStatusScreen extends Screen {
                 0xFFFFD875
         );
 
-        Player player = this.minecraft.player;
+        Player player = this.minecraft == null
+                ? null
+                : this.minecraft.player;
 
         if (player != null) {
             graphics.drawString(
@@ -119,7 +128,7 @@ public class RpgStatusScreen extends Screen {
 
             graphics.drawString(
                     font,
-                    "Рівень: " + RpgPlayerLevel.getLevel(player),
+                    "Рівень: " + RpgClientStatsCache.getLevel(),
                     left + 14, top + 50,
                     0xFFFFD875
             );
@@ -127,9 +136,10 @@ public class RpgStatusScreen extends Screen {
             graphics.drawString(
                     font,
                     "Досвід: "
-                            + RpgPlayerLevel.getExperience(player)
+                            + RpgClientStatsCache.getExperience()
                             + " / "
-                            + RpgPlayerLevel.getExperienceForNextLevel(player),
+                            + RpgPlayerLevel.getExperienceForNextLevel(
+                                    RpgClientStatsCache.getLevel()),
                     left + 14, top + 64,
                     0xFF80E8A1
             );
@@ -141,7 +151,7 @@ public class RpgStatusScreen extends Screen {
                 graphics.drawString(
                         font,
                         stat.getDisplayName() + ": "
-                                + RpgPlayerData.getPoints(player, stat),
+                                + getCachedStat(stat),
                         left + 14, y + 3,
                         0xFFFFFFFF
                 );
@@ -150,7 +160,7 @@ public class RpgStatusScreen extends Screen {
             graphics.drawString(
                     font,
                     "Вільні очки: "
-                            + RpgPlayerData.getFreePoints(player),
+                            + RpgClientStatsCache.getFreePoints(),
                     left + 14, top + 238,
                     0xFF80DFFF
             );
@@ -164,6 +174,21 @@ public class RpgStatusScreen extends Screen {
         );
 
         super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private int getCachedStat(RpgStats.Stat stat) {
+        return switch (stat) {
+            case STRENGTH ->
+                    RpgClientStatsCache.getStrength();
+            case AGILITY ->
+                    RpgClientStatsCache.getAgility();
+            case ENDURANCE ->
+                    RpgClientStatsCache.getEndurance();
+            case PERCEPTION ->
+                    RpgClientStatsCache.getPerception();
+            case INTELLIGENCE ->
+                    RpgClientStatsCache.getIntelligence();
+        };
     }
 
     @Override
