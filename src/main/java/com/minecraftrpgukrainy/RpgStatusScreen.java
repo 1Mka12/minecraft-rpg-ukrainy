@@ -1,3 +1,4 @@
+
 package com.minecraftrpgukrainy;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,12 +35,9 @@ public class RpgStatusScreen extends Screen {
         int plusX = left + panelWidth - 43;
         int minusX = left + panelWidth - 72;
 
-        // Запитуємо актуальні дані сервера.
-        if (this.minecraft != null && this.minecraft.player != null) {
-            PacketDistributor.sendToServer(
-                    new RpgAllocateStatPayload(-1, false)
-            );
-        }
+        // ВАЖЛИВО:
+        // Тут немає надсилання пакетів.
+        // Відкриття меню не витрачає очки.
 
         for (int i = 0; i < STATS.length; i++) {
             final RpgStats.Stat stat = STATS[i];
@@ -49,35 +47,51 @@ public class RpgStatusScreen extends Screen {
                     Button.builder(
                             Component.literal("+"),
                             button -> allocate(stat)
-                    ).bounds(plusX, y - 3, buttonWidth, 20).build()
+                    ).bounds(
+                            plusX, y - 3,
+                            buttonWidth, 20
+                    ).build()
             );
 
             addRenderableWidget(
                     Button.builder(
                             Component.literal("-"),
                             button -> remove(stat)
-                    ).bounds(minusX, y - 3, buttonWidth, 20).build()
+                    ).bounds(
+                            minusX, y - 3,
+                            buttonWidth, 20
+                    ).build()
             );
         }
     }
 
     private void allocate(RpgStats.Stat stat) {
-        if (this.minecraft == null || this.minecraft.player == null) {
+        if (this.minecraft == null
+                || this.minecraft.player == null
+                || stat == null) {
             return;
         }
 
         PacketDistributor.sendToServer(
-                new RpgAllocateStatPayload(stat.ordinal(), false)
+                new RpgAllocateStatPayload(
+                        stat.ordinal(),
+                        false
+                )
         );
     }
 
     private void remove(RpgStats.Stat stat) {
-        if (this.minecraft == null || this.minecraft.player == null) {
+        if (this.minecraft == null
+                || this.minecraft.player == null
+                || stat == null) {
             return;
         }
 
         PacketDistributor.sendToServer(
-                new RpgAllocateStatPayload(stat.ordinal(), true)
+                new RpgAllocateStatPayload(
+                        stat.ordinal(),
+                        true
+                )
         );
     }
 
@@ -86,8 +100,8 @@ public class RpgStatusScreen extends Screen {
             GuiGraphics graphics,
             int mouseX,
             int mouseY,
-            float partialTick) {
-
+            float partialTick
+    ) {
         renderBackground(graphics, mouseX, mouseY, partialTick);
 
         int panelWidth = Math.min(390, this.width - 20);
@@ -103,7 +117,8 @@ public class RpgStatusScreen extends Screen {
         );
 
         graphics.renderOutline(
-                left, top, panelWidth, panelHeight,
+                left, top,
+                panelWidth, panelHeight,
                 0xFFB99B59
         );
 
