@@ -24,16 +24,34 @@ public record RpgStatsSyncPayload(
                     "stats_sync"
             ));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, RpgStatsSyncPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::strength,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::agility,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::endurance,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::perception,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::intelligence,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::freePoints,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::level,
-                    ByteBufCodecs.VAR_INT, RpgStatsSyncPayload::experience,
+    public static final StreamCodec<
+            RegistryFriendlyByteBuf,
+            RpgStatsSyncPayload
+            > STREAM_CODEC = StreamCodec.composite(
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::strength,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::agility,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::endurance,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::perception,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::intelligence,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::freePoints,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::level,
+
+                    ByteBufCodecs.VAR_INT,
+                    RpgStatsSyncPayload::experience,
+
                     RpgStatsSyncPayload::new
             );
 
