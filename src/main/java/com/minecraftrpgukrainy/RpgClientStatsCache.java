@@ -1,3 +1,4 @@
+
 package com.minecraftrpgukrainy;
 
 public final class RpgClientStatsCache {
@@ -16,15 +17,19 @@ public final class RpgClientStatsCache {
     }
 
     public static void apply(RpgStatsSyncPayload payload) {
-        strength = payload.strength();
-        agility = payload.agility();
-        endurance = payload.endurance();
-        perception = payload.perception();
-        intelligence = payload.intelligence();
+        if (payload == null) {
+            return;
+        }
 
-        freePoints = payload.freePoints();
-        level = payload.level();
-        experience = payload.experience();
+        strength = Math.max(0, payload.strength());
+        agility = Math.max(0, payload.agility());
+        endurance = Math.max(0, payload.endurance());
+        perception = Math.max(0, payload.perception());
+        intelligence = Math.max(0, payload.intelligence());
+
+        freePoints = Math.max(0, payload.freePoints());
+        level = Math.max(1, payload.level());
+        experience = Math.max(0, payload.experience());
     }
 
     public static int getStrength() {
@@ -52,10 +57,10 @@ public final class RpgClientStatsCache {
     }
 
     public static int getLevel() {
-        return level;
+        return Math.max(1, level);
     }
 
     public static int getExperience() {
-        return experience;
+        return Math.max(0, experience);
     }
 }
