@@ -4,12 +4,12 @@ package com.minecraftrpgukrainy;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 @EventBusSubscriber(
@@ -19,66 +19,50 @@ import org.lwjgl.glfw.GLFW;
 )
 public final class RpgKeybinds {
 
-    public static final KeyMapping OPEN_STATUS =
-            new KeyMapping(
-                    "key.minecraft_rpg_ukrainy.status",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_N,
-                    "key.categories.misc"
-            );
+    public static final KeyMapping OPEN_STATUS = key(
+            "status", GLFW.GLFW_KEY_N
+    );
 
-    public static final KeyMapping TOGGLE_COMBAT =
-            new KeyMapping(
-                    "key.minecraft_rpg_ukrainy.toggle_combat",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_R,
-                    "key.categories.misc"
-            );
+    public static final KeyMapping TOGGLE_COMBAT = key(
+            "toggle_combat", GLFW.GLFW_KEY_R
+    );
 
-    public static final KeyMapping QUICK_MELEE =
-            new KeyMapping(
-                    "key.minecraft_rpg_ukrainy.quick_melee",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_X,
-                    "key.categories.misc"
-            );
+    public static final KeyMapping QUICK_MELEE = key(
+            "quick_melee", GLFW.GLFW_KEY_X
+    );
 
-    public static final KeyMapping QUICK_DASH =
-            new KeyMapping(
-                    "key.minecraft_rpg_ukrainy.quick_dash",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_V,
-                    "key.categories.misc"
-            );
+    public static final KeyMapping QUICK_DASH = key(
+            "quick_dash", GLFW.GLFW_KEY_V
+    );
 
     public static final KeyMapping[] SKILL_SLOTS = {
-            createSlot(1, GLFW.GLFW_KEY_1),
-            createSlot(2, GLFW.GLFW_KEY_2),
-            createSlot(3, GLFW.GLFW_KEY_3),
-            createSlot(4, GLFW.GLFW_KEY_4),
-            createSlot(5, GLFW.GLFW_KEY_5),
-            createSlot(6, GLFW.GLFW_KEY_6),
-            createSlot(7, GLFW.GLFW_KEY_7),
-            createSlot(8, GLFW.GLFW_KEY_8),
-            createSlot(9, GLFW.GLFW_KEY_9)
+            key("skill_slot_1", GLFW.GLFW_KEY_1),
+            key("skill_slot_2", GLFW.GLFW_KEY_2),
+            key("skill_slot_3", GLFW.GLFW_KEY_3),
+            key("skill_slot_4", GLFW.GLFW_KEY_4),
+            key("skill_slot_5", GLFW.GLFW_KEY_5),
+            key("skill_slot_6", GLFW.GLFW_KEY_6),
+            key("skill_slot_7", GLFW.GLFW_KEY_7),
+            key("skill_slot_8", GLFW.GLFW_KEY_8),
+            key("skill_slot_9", GLFW.GLFW_KEY_9)
     };
 
     private RpgKeybinds() {
     }
 
-    private static KeyMapping createSlot(int slot, int key) {
+    private static KeyMapping key(String name, int keyCode) {
         return new KeyMapping(
-                "key.minecraft_rpg_ukrainy.skill_slot_" + slot,
+                "key.minecraft_rpg_ukrainy." + name,
                 InputConstants.Type.KEYSYM,
-                key,
+                keyCode,
                 "key.categories.misc"
         );
     }
 
     @SubscribeEvent
     public static void registerKeyMappings(
-            RegisterKeyMappingsEvent event) {
-
+            RegisterKeyMappingsEvent event
+    ) {
         event.register(OPEN_STATUS);
         event.register(TOGGLE_COMBAT);
         event.register(QUICK_MELEE);
@@ -100,51 +84,45 @@ public final class RpgKeybinds {
         public static void onClientTick(ClientTickEvent.Post event) {
             Minecraft minecraft = Minecraft.getInstance();
 
+            while (OPEN_STATUS.consumeClick()) {
+                if (minecraft.player != null
+                        && minecraft.screen == null) {
+                    minecraft.setScreen(new RpgStatusScreen());
+                }
+            }
+
             if (minecraft.player == null || minecraft.screen != null) {
                 return;
             }
 
-            while (OPEN_STATUS.consumeClick()) {
-                minecraft.setScreen(new RpgStatusScreen());
-            }
-
             while (TOGGLE_COMBAT.consumeClick()) {
-                minecraft.player.displayClientMessage(
-                        Component.literal(
-                                "Перемикання режиму бою: потрібне підключення системи бою."
-                        ),
-                        true
+                PacketDistributor.sendToServer(
+                        new RpgSkillPayload(
+                                RpgSkillPayload.TOGGLE_COMBAT
+                        )
                 );
             }
 
             while (QUICK_MELEE.consumeClick()) {
-                minecraft.player.displayClientMessage(
-                        Component.literal(
-                                "Швидка навичка: Ближній бій — потрібне підключення навички."
-                        ),
-                        true
+                PacketDistributor.sendToServer(
+                        new RpgSkillPayload(
+                                RpgSkillPayload.QUICK_MELEE
+                        )
                 );
             }
 
             while (QUICK_DASH.consumeClick()) {
-                minecraft.player.displayClientMessage(
-                        Component.literal(
-                                "Швидка навичка: Ривок — потрібне підключення навички."
-                        ),
-                        true
+                PacketDistributor.sendToServer(
+                        new RpgSkillPayload(
+                                RpgSkillPayload.QUICK_DASH
+                        )
                 );
             }
 
             for (int i = 0; i < SKILL_SLOTS.length; i++) {
                 while (SKILL_SLOTS[i].consumeClick()) {
-                    final int slot = i + 1;
-
-                    minecraft.player.displayClientMessage(
-                            Component.literal(
-                                    "Слот навички " + slot
-                                            + ": навичку ще не призначено."
-                            ),
-                            true
+                    PacketDistributor.sendToServer(
+                            new RpgSkillPayload(i + 1)
                     );
                 }
             }
