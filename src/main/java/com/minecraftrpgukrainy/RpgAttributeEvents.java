@@ -3,8 +3,8 @@ package com.minecraftrpgukrainy;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -17,169 +17,150 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 )
 public final class RpgAttributeEvents {
 
-    private static final double HEALTH_PER_POINT = 2.0;
-    private static final double ARMOR_PER_POINT = 0.5;
-
-    private static final String MODIFIER_PREFIX =
-            "minecraft_rpg_ukrainy_";
-
-    private static final ResourceLocation HEALTH_ID =
+    private static final ResourceLocation ENDURANCE_HEALTH =
             ResourceLocation.fromNamespaceAndPath(
                     MinecraftRpgUkrainy.MOD_ID,
-                    MODIFIER_PREFIX + "endurance_health"
+                    "endurance_health"
             );
 
-    private static final ResourceLocation ARMOR_ID =
+    private static final ResourceLocation ENDURANCE_ARMOR =
             ResourceLocation.fromNamespaceAndPath(
                     MinecraftRpgUkrainy.MOD_ID,
-                    MODIFIER_PREFIX + "endurance_armor"
+                    "endurance_armor"
+            );
+
+    private static final ResourceLocation AGILITY_SPEED =
+            ResourceLocation.fromNamespaceAndPath(
+                    MinecraftRpgUkrainy.MOD_ID,
+                    "agility_speed"
             );
 
     private RpgAttributeEvents() {
     }
 
-    /**
-     * Оновлення після входу гравця.
-     */
     @SubscribeEvent
-    public static void onPlayerLogin(
-            PlayerEvent.PlayerLoggedInEvent event
-    ) {
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             updateAttributes(player);
         }
     }
 
-    /**
-     * Оновлення після відродження.
-     */
     @SubscribeEvent
-    public static void onPlayerRespawn(
-            PlayerEvent.PlayerRespawnEvent event
-    ) {
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             updateAttributes(player);
         }
     }
 
-    /**
-     * Перевірка після серверного тику.
-     *
-     * Це також підхоплює зміну характеристик,
-     * виконану через RpgAllocateStatPayload.
-     */
     @SubscribeEvent
-    public static void onPlayerTick(
-            PlayerTickEvent.Post event
-    ) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
 
-        updateAttributes(player);
+        if (player.tickCount % 20 == 0) {
+            updateAttributes(player);
+        }
     }
 
-    /**
-     * Застосовує бонуси Витривалості.
-     */
     public static void updateAttributes(ServerPlayer player) {
-        if (player == null || player.level().isClientSide()) {
-            return;
-        }
+        double total = RpgPlayerData.getTotalAllocatedPoints(player);
 
-        int totalPoints = RpgPlayerData.getTotalAllocatedPoints(player);
-        int endurance = RpgPlayerData.getPoints(
+        double endurance = effectivePoints(
+                RpgPlayerData.getPoints(
+                        player,
+                        RpgStats.Stat.ENDURANCE
+                ),
+                total
+        );
+
+        double agility = effectivePoints(
+                RpgPlayerData.getPoints(
+                        player,
+                        RpgStats.Stat.AGILITY
+                ),
+                total
+        );
+
+        // Витривалість: +2 максимального здоров'я за ефективне очко.
+        applyModifier(
                 player,
-                RpgStats.Stat.ENDURANCE
+                Attributes.MAX_HEALTH,
+                ENDURANCE_HEALTH,
+                endurance * 2.0
         );
 
-        double effectiveEndurance = getEffectiveEndurance(
-                endurance,
-                totalPoints
+        // Витривалість: +0,5 броні за ефективне очко.
+        applyModifier(
+                player,
+                Attributes.ARMOR,
+                ENDURANCE_ARMOR,
+                endurance * 0.5
         );
 
-        double healthBonus =
-                effectiveEndurance * HEALTH_PER_POINT;
-
-        double armorBonus =
-                effectiveEndurance * ARMOR_PER_POINT;
+        // Спритність: до +50% швидкості руху.
+        // Кожне ефективне очко дає 1%, максимум 50%.
+        double speedBonus = Math.min(0.50, agility * 0.01);
 
         applyModifier(
-                player.getAttribute(Attributes.MAX_HEALTH),
-                HEALTH_ID,
-                healthBonus
+                player,
+                Attributes.MOVEMENT_SPEED,
+                AGILITY_SPEED,
+                speedBonus
         );
 
-        applyModifier(
-                player.getAttribute(Attributes.ARMOR),
-                ARMOR_ID,
-                armorBonus
-        );
-
-        // Не лікуємо гравця при збільшенні максимуму.
-        // Якщо максимум зменшився нижче поточного здоров'я,
-        // обмежуємо здоров'я новим максимумом.
+        // Не лікуємо автоматично, якщо максимальне здоров'я зросло.
+        // Якщо максимум зменшився, поточне здоров'я обмежується ним.
         double maxHealth = player.getMaxHealth();
-        float currentHealth = player.getHealth();
 
-        if (currentHealth > maxHealth) {
+        if (player.getHealth() > maxHealth) {
             player.setHealth((float) maxHealth);
         }
     }
 
-    /**
-     * Повторює формулу RpgStats.getEffectivePoints()
-     * для збережених даних гравця.
-     */
-    private static double getEffectiveEndurance(
-            int endurance,
-            int totalPoints
+    private static double effectivePoints(
+            int allocated,
+            double total
     ) {
-        if (endurance <= 0 || totalPoints <= 0) {
+        if (allocated <= 0 || total <= 0.0) {
             return 0.0;
         }
 
-        double softCap =
-                totalPoints * RpgStats.SOFT_CAP_SHARE;
+        double softCap = total * RpgStats.SOFT_CAP_SHARE;
 
-        if (endurance <= softCap) {
-            return endurance;
+        if (allocated <= softCap) {
+            return allocated;
         }
 
         return softCap
-                + (endurance - softCap)
+                + (allocated - softCap)
                 * RpgStats.ABOVE_SOFT_CAP_EFFICIENCY;
     }
 
-    /**
-     * Оновлює тільки власний модифікатор.
-     * Інші модифікатори, зокрема бонус броні
-     * ультимативної навички, залишаються недоторканими.
-     */
     private static void applyModifier(
-            AttributeInstance attribute,
+            ServerPlayer player,
+            net.minecraft.core.Holder<Attribute> attribute,
             ResourceLocation id,
             double amount
     ) {
-        if (attribute == null) {
+        AttributeInstance instance =
+                player.getAttribute(attribute);
+
+        if (instance == null) {
             return;
         }
 
-        AttributeModifier existing = attribute.getModifier(id);
+        instance.removeModifier(id);
 
-        // Не оновлюємо атрибут без потреби.
-        if (existing != null
-                && Double.compare(existing.amount(), amount) == 0
-                && existing.operation()
-                == AttributeModifier.Operation.ADD_VALUE) {
+        if (amount == 0.0) {
             return;
         }
 
-        attribute.addOrUpdateTransientModifier(
-                new AttributeModifier(
+        instance.addTransientModifier(
+                new net.minecraft.world.entity.ai.attributes.AttributeModifier(
                         id,
                         amount,
-                        AttributeModifier.Operation.ADD_VALUE
+                        net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE
                 )
         );
     }
